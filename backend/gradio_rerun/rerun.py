@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from gradio_client import file
-from gradio_client.documentation import document
 
 from gradio.components.base import Component
 from gradio.data_classes import GradioRootModel, FileData

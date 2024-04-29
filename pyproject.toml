@@ -14,7 +14,7 @@ readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.8"
 authors = [{ name = "YOUR NAME", email = "YOUREMAIL@domain.com" }]
-keywords = ["gradio-custom-component", "gradio-template-SimpleImage", "multimodal data", "visualization", "machine learning", "robotics"]
+keywords = ["gradio-custom-component", "multimodal data", "visualization", "machine learning", "robotics", "Rerun", "rerun-viewer"]
 # Add dependencies here
 dependencies = ["gradio>=4.0,<5.0"]
 classifiers = [
@@ -37,8 +37,8 @@ classifiers = [
 # This will make it easy for people to find your deployed demo or source code when they
 # encounter your project in the wild.
 
-# [project.urls]
-# repository = "your github repository"
+[project.urls]
+repository = "https://github.com/radames/gradio-rerun-viewer"
 # space = "your space url"
 
 [project.optional-dependencies]
