@@ -105,7 +105,6 @@ class Rerun(Component):
         Returns:
             A FileData object containing the image data.
         """
-        print(value)
         if value is None:
             return RerunData(root=[])
 
