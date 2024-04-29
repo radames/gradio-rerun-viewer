@@ -57,6 +57,7 @@ with gr.Blocks(css=".gradio-container { max-width: unset!important; }") as demo:
         fn=predict,
         inputs=inputs,
         outputs=outputs,
+        run_on_click=True,
     )
 
 if __name__ == "__main__":
