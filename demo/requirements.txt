@@ -1,1 +1,2 @@
 gradio_rerun
+opencv-python

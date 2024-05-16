@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from gradio_client import file
-
-from gradio.components.base import Component
+from gradio import processing_utils
+from gradio.components.base import Component, StreamingInput, StreamingOutput
 from gradio.data_classes import GradioRootModel, FileData
 from gradio.events import Events
 
@@ -17,10 +17,10 @@ class RerunData(GradioRootModel):
     Data model for Rerun component it can be a list of FileData, FileData, or as list of URLs.
     """
 
-    root: list[FileData] | FileData | str | list[str]
+    root: list[FileData] | FileData | str | list[str] | bytes
 
 
-class Rerun(Component):
+class Rerun(Component, StreamingInput, StreamingOutput):
     """
     Creates an image component that can be used to upload images (as an input) or display images (as an output).
     """
@@ -31,7 +31,7 @@ class Rerun(Component):
         Events.upload,
     ]
 
-    data_model = RerunData
+    data_model = FileData
 
     def __init__(
         self,
@@ -47,6 +47,7 @@ class Rerun(Component):
         height: int | str = 640,
         interactive: bool | None = None,
         visible: bool = True,
+        streaming: bool = False,
         elem_id: str | None = None,
         elem_classes: list[str] | str | None = None,
         render: bool = True,
@@ -70,6 +71,7 @@ class Rerun(Component):
         """
         self.show_download_button = show_download_button
         self.height = height
+        self.streaming = streaming
         super().__init__(
             label=label,
             every=every,
@@ -85,7 +87,7 @@ class Rerun(Component):
             value=value,
         )
 
-    def preprocess(self, payload: FileData | list[FileData] | None) -> str | None:
+    def preprocess(self, payload: FileData | list[FileData] | bytes | None) -> str | None:
         """
         Parameters:
             payload: A FileData object containing the image data.
@@ -98,7 +100,7 @@ class Rerun(Component):
 
     def postprocess(
         self, value: list[FileData] | FileData | str | list[str]
-    ) -> RerunData:
+    ) -> RerunData | bytes:
         """
         Parameters:
             value: Expects a `str` or `pathlib.Path` object containing the path to the image.
@@ -107,6 +109,15 @@ class Rerun(Component):
         """
         if value is None:
             return RerunData(root=[])
+        
+        if isinstance(value, bytes):
+            if self.streaming:
+                return value
+            file_path = processing_utils.save_bytes_to_cache(
+                value, "rrd", cache_dir=self.GRADIO_CACHE
+            )
+            return RerunData(root=[FileData(path=file_path)])
+
 
         if not isinstance(value, list):
             value = [value]
@@ -126,6 +137,20 @@ class Rerun(Component):
                 for file in value
             ]
         )
+    
+    def stream_output(
+        self, value, output_id: str, first_chunk: bool
+    ) -> tuple[bytes | None, Any]:
+        output_file = {
+            "path": output_id,
+            "is_stream": True,
+        }
+        if value is None:
+            return None, output_file
+        return value, output_file
+
+    def check_streamable(self):
+        return self.streaming
 
     def example_payload(self) -> Any:
         return [

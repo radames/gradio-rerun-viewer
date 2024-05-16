@@ -8,11 +8,10 @@
   import "./app.css";
   import type { Gradio } from "@gradio/utils";
 
-  import { WebViewer } from "@rerun-io/web-viewer";
+  import { WebViewer, LogChannel } from "@rerun-io/web-viewer";
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
-  import { StatusTracker } from "@gradio/statustracker";
   import type { FileData } from "@gradio/client";
   import type { LoadingStatus } from "@gradio/statustracker";
 
@@ -27,6 +26,8 @@
   export let loading_status: LoadingStatus;
   export let interactive: boolean;
 
+  let old_value: null | FileData[] | string[] = null;
+
   export let gradio: Gradio<{
     change: never;
     upload: never;
@@ -37,24 +38,30 @@
   $: height = typeof height === "number" ? `${height}px` : height;
 
   $: value, gradio.dispatch("change");
+
   let dragging: boolean;
   let rr: WebViewer;
   let ref: HTMLDivElement;
 
+  let channel: LogChannel;
+
   onMount(() => {
     rr = new WebViewer();
-    rr.start(undefined, ref);
-    return () => rr.stop();
+    rr.start(undefined, ref, true).then(() => {
+      channel = rr.open_channel("gradio");
+    });
+
+    return () => {
+      channel.close();
+      rr.stop();
+    };
   });
 
-  $: if (value !== null && Array.isArray(value)) {
-    for (const file of value) {
-      if (typeof file !== "string") {
-        if (file.url) {
-          rr.open(file.url);
-        }
-      } else {
-        rr.open(file);
+  $: if (value !== null) {
+    if (JSON.stringify(value) !== JSON.stringify(old_value)) {
+      old_value = value;
+      if (!Array.isArray(value)) {
+        rr.open(value.url, { follow_if_http: true });
       }
     }
   }
@@ -73,12 +80,6 @@
     {scale}
     {min_width}
   >
-    <StatusTracker
-      autoscroll={gradio.autoscroll}
-      i18n={gradio.i18n}
-      {...loading_status}
-      on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
-    />
     <div class="viewer" bind:this={ref} style:height />
   </Block>
 {/if}
