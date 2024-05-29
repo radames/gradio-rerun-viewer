@@ -45,7 +45,9 @@ with gr.Blocks() as demo:
         with gr.Column():
             blur = gr.Button("Repeated Blur")
     with gr.Row():
-        viewer = Rerun(streaming=True)
+        viewer = Rerun(
+            streaming=True,
+        )
 
     blur.click(repeated_blur, inputs=[img], outputs=[viewer])
 

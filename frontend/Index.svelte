@@ -12,21 +12,28 @@
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
+  import { StatusTracker } from "@gradio/statustracker";
   import type { FileData } from "@gradio/client";
   import type { LoadingStatus } from "@gradio/statustracker";
+
+  interface BinaryStream {
+    url: string;
+    is_stream: boolean;
+  }
 
   export let elem_id = "";
   export let elem_classes: string[] = [];
   export let visible = true;
   export let height: number | string = 640;
-  export let value: null | FileData[] | string[] = null;
+  export let value: null | BinaryStream | (FileData | string)[] = null;
   export let container = true;
   export let scale: number | null = null;
   export let min_width: number | undefined = undefined;
   export let loading_status: LoadingStatus;
   export let interactive: boolean;
+  export let streaming: boolean;
 
-  let old_value: null | FileData[] | string[] = null;
+  let old_value: null | BinaryStream | (FileData | string)[] = null;
 
   export let gradio: Gradio<{
     change: never;
@@ -37,34 +44,60 @@
 
   $: height = typeof height === "number" ? `${height}px` : height;
 
-  $: value, gradio.dispatch("change");
-
   let dragging: boolean;
   let rr: WebViewer;
   let ref: HTMLDivElement;
+  let patched_loading_status: LoadingStatus;
 
-  let channel: LogChannel;
+  function try_load_value() {
+    if (
+      JSON.stringify(value) !== JSON.stringify(old_value) &&
+      rr != undefined &&
+      rr.ready
+    ) {
+      old_value = value;
+      if (!Array.isArray(value)) {
+        if (value.is_stream) {
+          rr.open(value.url, { follow_if_http: true });
+        } else {
+          rr.open(value.url);
+        }
+      } else {
+        for (const file of value) {
+          if (typeof file !== "string") {
+            if (file.url) {
+              rr.open(file.url);
+            }
+          } else {
+            rr.open(file);
+          }
+        }
+      }
+    }
+  }
 
   onMount(() => {
     rr = new WebViewer();
     rr.start(undefined, ref, true).then(() => {
-      channel = rr.open_channel("gradio");
+      try_load_value();
     });
 
     return () => {
-      channel.close();
       rr.stop();
     };
   });
 
-  $: if (value !== null) {
-    if (JSON.stringify(value) !== JSON.stringify(old_value)) {
-      old_value = value;
-      if (!Array.isArray(value)) {
-        rr.open(value.url, { follow_if_http: true });
-      }
+  $: {
+    patched_loading_status = loading_status;
+
+    // In streaming mode, we want the UI to be interactive even while the model is generating
+    // so set the status to complete.
+    if (streaming && patched_loading_status?.status === "generating") {
+      patched_loading_status.status = "complete";
     }
   }
+
+  $: value, try_load_value();
 </script>
 
 {#if !interactive}
@@ -80,6 +113,12 @@
     {scale}
     {min_width}
   >
+    <StatusTracker
+      autoscroll={gradio.autoscroll}
+      i18n={gradio.i18n}
+      {...patched_loading_status}
+      on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
+    />
     <div class="viewer" bind:this={ref} style:height />
   </Block>
 {/if}
