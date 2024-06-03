@@ -3,7 +3,7 @@ import gradio as gr
 from app import demo as app
 import os
 
-_docs = {'Rerun': {'description': 'Creates an image component that can be used to upload images (as an input) or display images (as an output).', 'members': {'__init__': {'value': {'type': 'list[str] | None', 'default': 'None', 'description': 'A path or URL for the default value that Rerun component is going to take. If callable, the function will be called whenever the app loads to set the initial value of the component.'}, 'label': {'type': 'str | None', 'default': 'None', 'description': 'The label for this component. Appears above the component and is also used as the header if there are a table of examples for this component. If None and used in a `gr.Interface`, the label will be the name of the parameter this component is assigned to.'}, 'every': {'type': 'float | None', 'default': 'None', 'description': "If `value` is a callable, run the function 'every' number of seconds while the client connection is open. Has no effect otherwise. Queue must be enabled. The event can be accessed (e.g. to cancel it) via this component's .load_event attribute."}, 'show_label': {'type': 'bool | None', 'default': 'None', 'description': 'if True, will display label.'}, 'show_download_button': {'type': 'bool', 'default': 'True', 'description': 'If True, will display button to download image.'}, 'container': {'type': 'bool', 'default': 'True', 'description': 'If True, will place the component in a container - providing some extra padding around the border.'}, 'scale': {'type': 'int | None', 'default': 'None', 'description': 'relative size compared to adjacent Components. For example if Components A and B are in a Row, and A has scale=2, and B has scale=1, A will be twice as wide as B. Should be an integer. scale applies in Rows, and to top-level Components in Blocks where fill_height=True.'}, 'min_width': {'type': 'int', 'default': '160', 'description': 'minimum pixel width, will wrap if not sufficient screen space to satisfy this value. If a certain scale value results in this Component being narrower than min_width, the min_width parameter will be respected first.'}, 'height': {'type': 'int | str', 'default': '640', 'description': 'height of component in pixels. If a string is provided, will be interpreted as a CSS value. If None, will be set to 640px.'}, 'interactive': {'type': 'bool | None', 'default': 'None', 'description': 'if True, will allow users to upload and edit an image; if False, can only be used to display images. If not provided, this is inferred based on whether the component is used as an input or output.'}, 'visible': {'type': 'bool', 'default': 'True', 'description': 'If False, component will be hidden.'}, 'elem_id': {'type': 'str | None', 'default': 'None', 'description': 'An optional string that is assigned as the id of this component in the HTML DOM. Can be used for targeting CSS styles.'}, 'elem_classes': {'type': 'list[str] | str | None', 'default': 'None', 'description': 'An optional list of strings that are assigned as the classes of this component in the HTML DOM. Can be used for targeting CSS styles.'}, 'render': {'type': 'bool', 'default': 'True', 'description': 'If False, component will not render be rendered in the Blocks context. Should be used if the intention is to assign event listeners now but render the component later.'}}, 'postprocess': {'value': {'type': 'list[gradio.data_classes.FileData]\n    | gradio.data_classes.FileData\n    | str\n    | list[str]', 'description': 'Expects a `str` or `pathlib.Path` object containing the path to the image.'}}, 'preprocess': {'return': {'type': 'str | None', 'description': 'A `str` containing the path to the image.'}, 'value': None}}, 'events': {'clear': {'type': None, 'default': None, 'description': 'This listener is triggered when the user clears the Rerun using the X button for the component.'}, 'change': {'type': None, 'default': None, 'description': 'Triggered when the value of the Rerun changes either because of user input (e.g. a user types in a textbox) OR because of a function update (e.g. an image receives a value from the output of an event trigger). See `.input()` for a listener that is only triggered by user input.'}, 'upload': {'type': None, 'default': None, 'description': 'This listener is triggered when the user uploads a file into the Rerun.'}}}, '__meta__': {'additional_interfaces': {}, 'user_fn_refs': {'Rerun': []}}}
+_docs = {'Rerun': {'description': 'Creates a Rerun viewer component that can be used to display the output of a Rerun stream.', 'members': {'__init__': {'value': {'type': 'list[pathlib.Path | str]\n    | pathlib.Path\n    | str\n    | bytes\n    | Callable\n    | None', 'default': 'None', 'description': 'Takes a singular or list of RRD resources. Each RRD can be a Path, a string containing a url, or a binary blob containing encoded RRD data. If callable, the function will be called whenever the app loads to set the initial value of the component.'}, 'label': {'type': 'str | None', 'default': 'None', 'description': 'The label for this component. Appears above the component and is also used as the header if there are a table of examples for this component. If None and used in a `gr.Interface`, the label will be the name of the parameter this component is assigned to.'}, 'every': {'type': 'float | None', 'default': 'None', 'description': "If `value` is a callable, run the function 'every' number of seconds while the client connection is open. Has no effect otherwise. Queue must be enabled. The event can be accessed (e.g. to cancel it) via this component's .load_event attribute."}, 'show_label': {'type': 'bool | None', 'default': 'None', 'description': 'if True, will display label.'}, 'container': {'type': 'bool', 'default': 'True', 'description': 'If True, will place the component in a container - providing some extra padding around the border.'}, 'scale': {'type': 'int | None', 'default': 'None', 'description': 'relative size compared to adjacent Components. For example if Components A and B are in a Row, and A has scale=2, and B has scale=1, A will be twice as wide as B. Should be an integer. scale applies in Rows, and to top-level Components in Blocks where fill_height=True.'}, 'min_width': {'type': 'int', 'default': '160', 'description': 'minimum pixel width, will wrap if not sufficient screen space to satisfy this value. If a certain scale value results in this Component being narrower than min_width, the min_width parameter will be respected first.'}, 'height': {'type': 'int | str', 'default': '640', 'description': 'height of component in pixels. If a string is provided, will be interpreted as a CSS value. If None, will be set to 640px.'}, 'visible': {'type': 'bool', 'default': 'True', 'description': 'If False, component will be hidden.'}, 'streaming': {'type': 'bool', 'default': 'False', 'description': 'If True, the data should be incrementally yielded from the source as `bytes` returned by calling `.read()` on an `rr.binary_stream()`'}, 'elem_id': {'type': 'str | None', 'default': 'None', 'description': 'An optional string that is assigned as the id of this component in the HTML DOM. Can be used for targeting CSS styles.'}, 'elem_classes': {'type': 'list[str] | str | None', 'default': 'None', 'description': 'An optional list of strings that are assigned as the classes of this component in the HTML DOM. Can be used for targeting CSS styles.'}, 'render': {'type': 'bool', 'default': 'True', 'description': 'If False, component will not render be rendered in the Blocks context. Should be used if the intention is to assign event listeners now but render the component later.'}}, 'postprocess': {'value': {'type': 'list[pathlib.Path | str] | pathlib.Path | str | bytes', 'description': 'Expects'}}, 'preprocess': {'return': {'type': 'RerunData | None', 'description': 'A RerunData object.'}, 'value': None}}, 'events': {}}, '__meta__': {'additional_interfaces': {'RerunData': {'source': 'class RerunData(GradioRootModel):\n    root: list[FileData | str]'}}, 'user_fn_refs': {'Rerun': ['RerunData']}}}
 
 abs_path = os.path.join(os.path.dirname(__file__), "css.css")
 
@@ -21,7 +21,7 @@ with gr.Blocks(
 # `gradio_rerun`
 
 <div style="display: flex; gap: 7px;">
-<img alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.0.1%20-%20orange"> <a href="https://github.com/radames/gradio-rerun-viewer/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> 
+<a href="https://pypi.org/project/gradio_rerun/" target="_blank"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/gradio_rerun"></a> <a href="https://github.com/radames/gradio-rerun-viewer/issues" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Issues-white?logo=github&logoColor=black"></a> 
 </div>
 
 Rerun viewer with Gradio
@@ -38,67 +38,153 @@ pip install gradio_rerun
 ## Usage
 
 ```python
+import cv2
+import os
+import tempfile
+import time
+
 import gradio as gr
 from gradio_rerun import Rerun
 
+import rerun as rr
+import rerun.blueprint as rrb
 
-example = Rerun().example_value()
+from color_grid import build_color_grid
+
+# NOTE: Functions that work with Rerun should be decorated with `@rr.thread_local_stream`.
+# This decorator creates a generator-aware thread-local context so that rerun log calls
+# across multiple workers stay isolated.
 
 
-def predict(url: str, file_path: str | list[str] | None):
-    if url:
-        return url
-    return file_path
+# A task can directly log to a binary stream, which is routed to the embedded viewer.
+# Incremental chunks are yielded to the viewer using `yield stream.read()`.
+#
+# This is the preferred way to work with Rerun in Gradio since your data can be immediately and
+# incrementally seen by the viewer. Also, there are no ephemeral RRDs to cleanup or manage.
+@rr.thread_local_stream("rerun_example_streaming_blur")
+def streaming_repeated_blur(img):
+    stream = rr.binary_stream()
 
+    if img is None:
+        raise gr.Error("Must provide an image to blur.")
 
-with gr.Blocks(css=".gradio-container { max-width: unset!important; }") as demo:
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                file_path = gr.File(file_count="multiple", type="filepath")
-                url = gr.Text(
-                    info="Or use a URL",
-                    label="URL",
-                )
-        with gr.Column():
-            pass
-    btn = gr.Button("Run", scale=0)
-    with gr.Row():
-        rerun_viewer = Rerun(height=900)
-
-    inputs = [file_path, url]
-    outputs = [rerun_viewer]
-
-    gr.on([btn.click, file_path.upload], fn=predict, inputs=inputs, outputs=outputs)
-
-    gr.Examples(
-        examples=[
-            [
-                None,
-                "https://app.rerun.io/version/0.15.1/examples/detect_and_track_objects.rrd",
-            ],
-            [
-                ["./examples/rgbd.rrd"],
-                None,
-            ],
-            [
-                ["./examples/rrt-star.rrd"],
-                None,
-            ],
-            [
-                ["./examples/structure_from_motion.rrd"],
-                None,
-            ],
-            [
-                ["./examples/structure_from_motion.rrd", "./examples/rrt-star.rrd"],
-                None,
-            ],
-        ],
-        fn=predict,
-        inputs=inputs,
-        outputs=outputs,
-        run_on_click=True,
+    blueprint = rrb.Blueprint(
+        rrb.Horizontal(
+            rrb.Spatial2DView(origin="image/original"),
+            rrb.Spatial2DView(origin="image/blurred"),
+        ),
+        collapse_panels=True,
     )
+
+    rr.send_blueprint(blueprint)
+
+    rr.set_time_sequence("iteration", 0)
+
+    rr.log("image/original", rr.Image(img))
+    yield stream.read()
+
+    blur = img
+
+    for i in range(100):
+        rr.set_time_sequence("iteration", i)
+
+        # Pretend blurring takes a while so we can see streaming in action.
+        time.sleep(0.1)
+        blur = cv2.GaussianBlur(blur, (5, 5), 0)
+
+        rr.log("image/blurred", rr.Image(blur))
+
+        # Each time we yield bytes from the stream back to Gradio, they
+        # are incrementally sent to the viewer. Make sure to yield any time
+        # you want the user to be able to see progress.
+        yield stream.read()
+
+
+# However, if you have a workflow that creates an RRD file instead, you can still send it
+# directly to the viewer by simply returning the path to the RRD file.
+#
+# This may be helpful if you need to execute a helper tool written in C++ or Rust that can't
+# be easily modified to stream data directly via Gradio.
+#
+# In this case you may want to clean up the RRD file after it's sent to the viewer so that you
+# don't accumulate too many  temporary files.
+@rr.thread_local_stream("rerun_example_cube_rrd")
+def create_cube_rrd(x, y, z, pending_cleanup):
+    cube = build_color_grid(int(x), int(y), int(z), twist=0)
+    rr.log("cube", rr.Points3D(cube.positions, colors=cube.colors, radii=0.5))
+
+    # We eventually want to clean up the RRD file after it's sent to the viewer, so tracking
+    # any pending files to be cleaned up when the state is deleted.
+    temp = tempfile.NamedTemporaryFile(prefix="cube_", suffix=".rrd", delete=False)
+    pending_cleanup.append(temp.name)
+
+    blueprint = rrb.Spatial3DView(origin="cube")
+    rr.save(temp.name, default_blueprint=blueprint)
+
+    # Just return the name of the file -- Gradio will convert it to a FileData object
+    # and send it to the viewer.
+    return temp.name
+
+
+def cleanup_cube_rrds(pending_cleanup):
+    for f in pending_cleanup:
+        os.unlink(f)
+
+
+with gr.Blocks() as demo:
+    with gr.Tab("Streaming"):
+        with gr.Row():
+            img = gr.Image(interactive=True, label="Image")
+            with gr.Column():
+                stream_blur = gr.Button("Stream Repeated Blur")
+
+    with gr.Tab("Dynamic RRD"):
+        pending_cleanup = gr.State(
+            [], time_to_live=10, delete_callback=cleanup_cube_rrds
+        )
+        with gr.Row():
+            x_count = gr.Number(
+                minimum=1, maximum=10, value=5, precision=0, label="X Count"
+            )
+            y_count = gr.Number(
+                minimum=1, maximum=10, value=5, precision=0, label="Y Count"
+            )
+            z_count = gr.Number(
+                minimum=1, maximum=10, value=5, precision=0, label="Z Count"
+            )
+        with gr.Row():
+            create_rrd = gr.Button("Create RRD")
+
+    with gr.Tab("Hosted RRD"):
+        with gr.Row():
+            # It may be helpful to point the viewer to a hosted RRD file on another server.
+            # If an RRD file is hosted via http, you can just return a URL to the file.
+            choose_rrd = gr.Dropdown(
+                label="RRD",
+                choices=[
+                    f"{rr.bindings.get_app_url()}/examples/arkit_scenes.rrd",
+                    f"{rr.bindings.get_app_url()}/examples/dna.rrd",
+                    f"{rr.bindings.get_app_url()}/examples/plots.rrd",
+                ],
+            )
+
+    # Rerun 0.16 has issues when embedded in a Gradio tab, so we share a viewer between all the tabs.
+    # In 0.17 we can instead scope each viewer to its own tab to clean up these examples further.
+    with gr.Row():
+        viewer = Rerun(
+            streaming=True,
+        )
+
+    stream_blur.click(streaming_repeated_blur, inputs=[img], outputs=[viewer])
+
+    create_rrd.click(
+        create_cube_rrd,
+        inputs=[x_count, y_count, z_count, pending_cleanup],
+        outputs=[viewer],
+    )
+
+    choose_rrd.change(lambda x: x, inputs=[choose_rrd], outputs=[viewer])
+
 
 if __name__ == "__main__":
     demo.launch()
@@ -113,11 +199,7 @@ if __name__ == "__main__":
 ### Initialization
 """, elem_classes=["md-custom"], header_links=True)
 
-    gr.ParamViewer(value=_docs["Rerun"]["members"]["__init__"], linkify=[])
-
-
-    gr.Markdown("### Events")
-    gr.ParamViewer(value=_docs["Rerun"]["events"], linkify=['Event'])
+    gr.ParamViewer(value=_docs["Rerun"]["members"]["__init__"], linkify=['RerunData'])
 
 
 
@@ -133,16 +215,13 @@ The impact on the users predict function varies depending on whether the compone
 
 The code snippet below is accurate in cases where the component is used as both an input and an output.
 
-- **As input:** Is passed, a `str` containing the path to the image.
-- **As output:** Should return, expects a `str` or `pathlib.Path` object containing the path to the image.
+- **As input:** Is passed, a RerunData object.
+- **As output:** Should return, expects.
 
  ```python
 def predict(
-    value: str | None
-) -> list[gradio.data_classes.FileData]
-    | gradio.data_classes.FileData
-    | str
-    | list[str]:
+    value: RerunData | None
+) -> list[pathlib.Path | str] | pathlib.Path | str | bytes:
     return value
 ```
 """, elem_classes=["md-custom", "Rerun-user-fn"], header_links=True)
@@ -150,10 +229,18 @@ def predict(
 
 
 
+    code_RerunData = gr.Markdown("""
+## `RerunData`
+```python
+class RerunData(GradioRootModel):
+    root: list[FileData | str]
+```""", elem_classes=["md-custom", "RerunData"], header_links=True)
+
     demo.load(None, js=r"""function() {
-    const refs = {};
+    const refs = {
+            RerunData: [], };
     const user_fn_refs = {
-          Rerun: [], };
+          Rerun: ['RerunData'], };
     requestAnimationFrame(() => {
 
         Object.entries(user_fn_refs).forEach(([key, refs]) => {

@@ -8,7 +8,7 @@
   import "./app.css";
   import type { Gradio } from "@gradio/utils";
 
-  import { WebViewer } from "@rerun-io/web-viewer";
+  import { WebViewer, LogChannel } from "@rerun-io/web-viewer";
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
@@ -16,16 +16,24 @@
   import type { FileData } from "@gradio/client";
   import type { LoadingStatus } from "@gradio/statustracker";
 
+  interface BinaryStream {
+    url: string;
+    is_stream: boolean;
+  }
+
   export let elem_id = "";
   export let elem_classes: string[] = [];
   export let visible = true;
   export let height: number | string = 640;
-  export let value: null | FileData[] | string[] = null;
+  export let value: null | BinaryStream | (FileData | string)[] = null;
   export let container = true;
   export let scale: number | null = null;
   export let min_width: number | undefined = undefined;
   export let loading_status: LoadingStatus;
   export let interactive: boolean;
+  export let streaming: boolean;
+
+  let old_value: null | BinaryStream | (FileData | string)[] = null;
 
   export let gradio: Gradio<{
     change: never;
@@ -36,28 +44,60 @@
 
   $: height = typeof height === "number" ? `${height}px` : height;
 
-  $: value, gradio.dispatch("change");
   let dragging: boolean;
   let rr: WebViewer;
   let ref: HTMLDivElement;
+  let patched_loading_status: LoadingStatus;
 
-  onMount(() => {
-    rr = new WebViewer();
-    rr.start(undefined, ref);
-    return () => rr.stop();
-  });
-
-  $: if (value !== null && Array.isArray(value)) {
-    for (const file of value) {
-      if (typeof file !== "string") {
-        if (file.url) {
-          rr.open(file.url);
+  function try_load_value() {
+    if (
+      JSON.stringify(value) !== JSON.stringify(old_value) &&
+      rr != undefined &&
+      rr.ready
+    ) {
+      old_value = value;
+      if (!Array.isArray(value)) {
+        if (value.is_stream) {
+          rr.open(value.url, { follow_if_http: true });
+        } else {
+          rr.open(value.url);
         }
       } else {
-        rr.open(file);
+        for (const file of value) {
+          if (typeof file !== "string") {
+            if (file.url) {
+              rr.open(file.url);
+            }
+          } else {
+            rr.open(file);
+          }
+        }
       }
     }
   }
+
+  onMount(() => {
+    rr = new WebViewer();
+    rr.start(undefined, ref, true).then(() => {
+      try_load_value();
+    });
+
+    return () => {
+      rr.stop();
+    };
+  });
+
+  $: {
+    patched_loading_status = loading_status;
+
+    // In streaming mode, we want the UI to be interactive even while the model is generating
+    // so set the status to complete.
+    if (streaming && patched_loading_status?.status === "generating") {
+      patched_loading_status.status = "complete";
+    }
+  }
+
+  $: value, try_load_value();
 </script>
 
 {#if !interactive}
@@ -76,20 +116,22 @@
     <StatusTracker
       autoscroll={gradio.autoscroll}
       i18n={gradio.i18n}
-      {...loading_status}
+      {...patched_loading_status}
       on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
     />
     <div class="viewer" bind:this={ref} style:height />
   </Block>
 {/if}
 
-<style>
-  .viewer {
+<style lang="scss">
+  div.viewer {
     width: 100%;
-  }
 
-  :global(div.viewer > canvas) {
-    position: initial !important;
-    top: unset !important;
+    :global(> canvas) {
+      position: initial !important;
+      top: unset !important;
+      width: 100%;
+      height: 100%;
+    }
   }
 </style>
