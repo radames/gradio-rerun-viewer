@@ -123,13 +123,15 @@
   </Block>
 {/if}
 
-<style>
-  .viewer {
+<style lang="scss">
+  div.viewer {
     width: 100%;
-  }
 
-  :global(div.viewer > canvas) {
-    position: initial !important;
-    top: unset !important;
+    :global(> canvas) {
+      position: initial !important;
+      top: unset !important;
+      width: 100%;
+      height: 100%;
+    }
   }
 </style>
