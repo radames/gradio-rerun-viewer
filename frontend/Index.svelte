@@ -8,7 +8,7 @@
   import "./app.css";
   import type { Gradio } from "@gradio/utils";
 
-  import { WebViewer, LogChannel } from "@rerun-io/web-viewer";
+  import { WebViewer } from "@rerun-io/web-viewer";
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
@@ -50,11 +50,7 @@
   let patched_loading_status: LoadingStatus;
 
   function try_load_value() {
-    if (
-      JSON.stringify(value) !== JSON.stringify(old_value) &&
-      rr != undefined &&
-      rr.ready
-    ) {
+    if (JSON.stringify(value) !== JSON.stringify(old_value) && rr != undefined && rr.ready) {
       old_value = value;
       if (!Array.isArray(value)) {
         if (value.is_stream) {
@@ -78,7 +74,7 @@
 
   onMount(() => {
     rr = new WebViewer();
-    rr.start(undefined, ref, true).then(() => {
+    rr.start(undefined, ref, { hide_welcome_screen: true, allow_fullscreen: true }).then(() => {
       try_load_value();
     });
 
@@ -128,8 +124,6 @@
     width: 100%;
 
     :global(> canvas) {
-      position: initial !important;
-      top: unset !important;
       width: 100%;
       height: 100%;
     }
