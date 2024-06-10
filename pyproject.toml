@@ -50,7 +50,7 @@ repository = "https://github.com/radames/gradio-rerun-viewer"
 # space = "your space url"
 
 [project.optional-dependencies]
-dev = ["build", "twine"]
+dev = ["build", "twine", "opencv-python>=4.10.0"]
 
 [tool.hatch.build]
 artifacts = ["/backend/gradio_rerun/templates", "*.pyi"]
