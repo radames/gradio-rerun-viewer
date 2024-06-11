@@ -133,6 +133,11 @@ with gr.Blocks() as demo:
     with gr.Row():
         viewer = Rerun(
             streaming=True,
+            panel_states={
+                "time": "hidden",
+                "blueprint": "hidden",
+                "selection": "hidden",
+            },
         )
 
     stream_blur.click(streaming_repeated_blur, inputs=[img], outputs=[viewer])
