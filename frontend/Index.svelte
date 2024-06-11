@@ -8,7 +8,7 @@
   import "./app.css";
   import type { Gradio } from "@gradio/utils";
 
-  import { WebViewer } from "@rerun-io/web-viewer";
+  import { WebViewer, type Panel, type PanelState } from "@rerun-io/web-viewer";
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
@@ -32,6 +32,7 @@
   export let loading_status: LoadingStatus;
   export let interactive: boolean;
   export let streaming: boolean;
+  export let panel_states: { [K in Panel]: PanelState } | null = null;
 
   let old_value: null | BinaryStream | (FileData | string)[] = null;
 
@@ -72,12 +73,27 @@
     }
   }
 
+  const is_panel = (v: string): v is Panel => ["top", "blueprint", "selection", "time"].includes(v);
+
+  function setup_panels() {
+    if (rr?.ready && panel_states) {
+      for (const panel in panel_states) {
+        // ignore extra properties
+        if (!is_panel(panel)) continue;
+        rr.override_panel_state(panel, panel_states[panel]);
+      }
+    }
+  }
+
   onMount(() => {
     rr = new WebViewer();
-    rr.start(undefined, ref, { hide_welcome_screen: true, allow_fullscreen: true }).then(() => {
+    rr.on("ready", () => {
       try_load_value();
+      setup_panels();
     });
+    rr.on("fullscreen", (on) => rr.toggle_panel_overrides(!on));
 
+    rr.start(undefined, ref, { hide_welcome_screen: true, allow_fullscreen: true });
     return () => {
       rr.stop();
     };
@@ -94,6 +110,7 @@
   }
 
   $: value, try_load_value();
+  $: panel_states, setup_panels();
 </script>
 
 {#if !interactive}
