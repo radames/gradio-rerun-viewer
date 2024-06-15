@@ -5,11 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
-from gradio_client import file
+import httpx
+from gradio_client import handle_file
+from gradio_client import utils as client_utils
 from gradio import processing_utils
 from gradio.components.base import Component, StreamingOutput
 from gradio.data_classes import GradioRootModel, FileData
 from gradio.events import Events
+import numpy as np
 
 
 class RerunData(GradioRootModel):
@@ -99,16 +102,18 @@ class Rerun(Component, StreamingOutput):
     ) -> RerunData | bytes:
         """
         Parameters:
-            value: Expects
+            value: Expects a list of RRD files or URLs, a single RRD file or URL, or a binary blob containing encoded RRD data.
         Returns:
-            A FileData object containing the image data.
+            A RerunData object.
         """
+
         if value is None:
             return RerunData(root=[])
 
         if isinstance(value, bytes):
             if self.streaming:
                 return value
+
             file_path = processing_utils.save_bytes_to_cache(
                 value, "rrd", cache_dir=self.GRADIO_CACHE
             )
@@ -117,11 +122,6 @@ class Rerun(Component, StreamingOutput):
         if not isinstance(value, list):
             value = [value]
 
-        def is_url(input: Path | str) -> bool:
-            if isinstance(input, Path):
-                return False
-            return input.startswith("http://") or input.startswith("https://")
-
         return RerunData(
             root=[
                 FileData(
@@ -129,7 +129,7 @@ class Rerun(Component, StreamingOutput):
                     orig_name=Path(file).name,
                     size=Path(file).stat().st_size,
                 )
-                if not is_url(file)
+                if not client_utils.is_http_url_like(file)
                 else file
                 for file in value
             ]
@@ -142,15 +142,36 @@ class Rerun(Component, StreamingOutput):
             "path": output_id,
             "is_stream": True,
         }
+
         if value is None:
             return None, output_file
+
+        if isinstance(value, bytes):
+            return value, output_file
+
+        value = value[0]
+
+        if client_utils.is_http_url_like(value):
+            return value, output_file
+
+        if client_utils.is_http_url_like(value["path"]):
+            response = httpx.get(value["path"])
+            value = response.content
+        else:
+            output_file["orig_name"] = value["orig_name"]
+            file_path = value["path"]
+            with open(file_path, "rb") as f:
+                value = f.read()
+
         return value, output_file
 
     def check_streamable(self):
         return self.streaming
 
     def example_payload(self) -> Any:
-        return []
+        return handle_file(
+            "https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav"
+        )
 
     def example_value(self) -> Any:
         return [

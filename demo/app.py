@@ -24,7 +24,6 @@ from color_grid import build_color_grid
 @rr.thread_local_stream("rerun_example_streaming_blur")
 def streaming_repeated_blur(img):
     stream = rr.binary_stream()
-
     if img is None:
         raise gr.Error("Must provide an image to blur.")
 
@@ -45,7 +44,7 @@ def streaming_repeated_blur(img):
 
     blur = img
 
-    for i in range(100):
+    for i in range(10):
         rr.set_time_sequence("iteration", i)
 
         # Pretend blurring takes a while so we can see streaming in action.
@@ -92,12 +91,23 @@ def cleanup_cube_rrds(pending_cleanup):
 
 
 with gr.Blocks() as demo:
+    viewer = Rerun(streaming=True, render=False)
     with gr.Tab("Streaming"):
         with gr.Row():
             img = gr.Image(interactive=True, label="Image")
             with gr.Column():
                 stream_blur = gr.Button("Stream Repeated Blur")
-
+        gr.Examples(
+            [
+                [
+                    "https://static.rerun.io/detect-and-track-objects/63d7684ab1504c86a5375cb5db0fc515af433e08/480w.png"
+                ],
+            ],
+            fn=streaming_repeated_blur,
+            inputs=[img],
+            outputs=[viewer],
+            cache_examples="lazy",
+        )
     with gr.Tab("Dynamic RRD"):
         pending_cleanup = gr.State(
             [], time_to_live=10, delete_callback=cleanup_cube_rrds
@@ -115,6 +125,16 @@ with gr.Blocks() as demo:
         with gr.Row():
             create_rrd = gr.Button("Create RRD")
 
+        gr.Examples(
+            [
+                [10, 10, 10, None],
+                [10, 1, 10, None],
+            ],
+            fn=create_cube_rrd,
+            inputs=[x_count, y_count, z_count, pending_cleanup],
+            outputs=[viewer],
+            cache_examples="lazy",
+        )
     with gr.Tab("Hosted RRD"):
         with gr.Row():
             # It may be helpful to point the viewer to a hosted RRD file on another server.
@@ -127,13 +147,22 @@ with gr.Blocks() as demo:
                     f"{rr.bindings.get_app_url()}/examples/plots.rrd",
                 ],
             )
+        gr.Examples(
+            [
+                f"{rr.bindings.get_app_url()}/examples/arkit_scenes.rrd",
+                f"{rr.bindings.get_app_url()}/examples/dna.rrd",
+                f"{rr.bindings.get_app_url()}/examples/plots.rrd",
+            ],
+            fn=lambda x: x,
+            inputs=[choose_rrd],
+            outputs=[viewer],
+            cache_examples="lazy",
+        )
 
     # Rerun 0.16 has issues when embedded in a Gradio tab, so we share a viewer between all the tabs.
     # In 0.17 we can instead scope each viewer to its own tab to clean up these examples further.
     with gr.Row():
-        viewer = Rerun(
-            streaming=True,
-        )
+        viewer.render()
 
     stream_blur.click(streaming_repeated_blur, inputs=[img], outputs=[viewer])
 
