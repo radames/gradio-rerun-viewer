@@ -93,7 +93,12 @@
     });
     rr.on("fullscreen", (on) => rr.toggle_panel_overrides(!on));
 
-    rr.start(undefined, ref, { hide_welcome_screen: true, allow_fullscreen: true });
+    rr.start(undefined, ref, {
+      hide_welcome_screen: true,
+      allow_fullscreen: true,
+      width: "",
+      height: "",
+    });
     return () => {
       rr.stop();
     };
@@ -104,6 +109,7 @@
 
     // In streaming mode, we want the UI to be interactive even while the model is generating
     // so set the status to complete.
+    // @ts-expect-error: `status` union does not include `generating`
     if (streaming && patched_loading_status?.status === "generating") {
       patched_loading_status.status = "complete";
     }
@@ -141,6 +147,7 @@
     width: 100%;
 
     :global(> canvas) {
+      display: block;
       width: 100%;
       height: 100%;
     }
