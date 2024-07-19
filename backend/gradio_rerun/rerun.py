@@ -47,6 +47,7 @@ class Rerun(Component, StreamingOutput):
         elem_id: str | None = None,
         elem_classes: list[str] | str | None = None,
         render: bool = True,
+        panel_states: dict[str, Any] | None = None,
     ):
         """
         Parameters:
@@ -63,9 +64,11 @@ class Rerun(Component, StreamingOutput):
             elem_id: An optional string that is assigned as the id of this component in the HTML DOM. Can be used for targeting CSS styles.
             elem_classes: An optional list of strings that are assigned as the classes of this component in the HTML DOM. Can be used for targeting CSS styles.
             render: If False, component will not render be rendered in the Blocks context. Should be used if the intention is to assign event listeners now but render the component later.
+            panel_states: Force viewer panels to a specific state. Any panels set cannot be toggled by the user in the viewer. Panel names are "top", "blueprint", "selection", and "time". States are "hidden", "collapsed", and "expanded".
         """
         self.height = height
         self.streaming = streaming
+        self.panel_states = panel_states
         super().__init__(
             label=label,
             every=every,
@@ -80,6 +83,11 @@ class Rerun(Component, StreamingOutput):
             render=render,
             value=value,
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config["panel_states"] = self.panel_states
+        return config
 
     def preprocess(self, payload: RerunData | None) -> RerunData | None:
         """

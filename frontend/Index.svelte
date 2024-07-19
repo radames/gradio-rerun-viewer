@@ -8,7 +8,7 @@
   import "./app.css";
   import type { Gradio } from "@gradio/utils";
 
-  import { WebViewer, LogChannel } from "@rerun-io/web-viewer";
+  import { WebViewer, type Panel, type PanelState } from "@rerun-io/web-viewer";
   import { onMount } from "svelte";
 
   import { Block } from "@gradio/atoms";
@@ -32,6 +32,7 @@
   export let loading_status: LoadingStatus;
   export let interactive: boolean;
   export let streaming: boolean;
+  export let panel_states: { [K in Panel]: PanelState } | null = null;
 
   let old_value: null | BinaryStream | (FileData | string)[] = null;
 
@@ -50,11 +51,7 @@
   let patched_loading_status: LoadingStatus;
 
   function try_load_value() {
-    if (
-      JSON.stringify(value) !== JSON.stringify(old_value) &&
-      rr != undefined &&
-      rr.ready
-    ) {
+    if (JSON.stringify(value) !== JSON.stringify(old_value) && rr != undefined && rr.ready) {
       old_value = value;
       if (!Array.isArray(value)) {
         if (value.is_stream) {
@@ -76,12 +73,32 @@
     }
   }
 
+  const is_panel = (v: string): v is Panel => ["top", "blueprint", "selection", "time"].includes(v);
+
+  function setup_panels() {
+    if (rr?.ready && panel_states) {
+      for (const panel in panel_states) {
+        // ignore extra properties
+        if (!is_panel(panel)) continue;
+        rr.override_panel_state(panel, panel_states[panel]);
+      }
+    }
+  }
+
   onMount(() => {
     rr = new WebViewer();
-    rr.start(undefined, ref, true).then(() => {
+    rr.on("ready", () => {
       try_load_value();
+      setup_panels();
     });
+    rr.on("fullscreen", (on) => rr.toggle_panel_overrides(!on));
 
+    rr.start(undefined, ref, {
+      hide_welcome_screen: true,
+      allow_fullscreen: true,
+      width: "",
+      height: "",
+    });
     return () => {
       rr.stop();
     };
@@ -92,12 +109,14 @@
 
     // In streaming mode, we want the UI to be interactive even while the model is generating
     // so set the status to complete.
+    // @ts-expect-error: `status` union does not include `generating`
     if (streaming && patched_loading_status?.status === "generating") {
       patched_loading_status.status = "complete";
     }
   }
 
   $: value, try_load_value();
+  $: panel_states, setup_panels();
 </script>
 
 {#if !interactive}
@@ -128,8 +147,7 @@
     width: 100%;
 
     :global(> canvas) {
-      position: initial !important;
-      top: unset !important;
+      display: block;
       width: 100%;
       height: 100%;
     }
