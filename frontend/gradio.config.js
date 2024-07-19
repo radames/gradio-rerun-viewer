@@ -20,5 +20,8 @@ export default {
   svelte: {
     preprocess: [],
   },
+  build: {
+    target: "esnext",
+  },
 };
 
