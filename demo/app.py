@@ -97,6 +97,16 @@ with gr.Blocks() as demo:
             img = gr.Image(interactive=True, label="Image")
             with gr.Column():
                 stream_blur = gr.Button("Stream Repeated Blur")
+        with gr.Row():
+            viewer = Rerun(
+                streaming=True,
+                panel_states={
+                    "time": "collapsed",
+                    "blueprint": "hidden",
+                    "selection": "hidden",
+                },
+            )
+        stream_blur.click(streaming_repeated_blur, inputs=[img], outputs=[viewer])
 
     with gr.Tab("Dynamic RRD"):
         pending_cleanup = gr.State(
@@ -114,6 +124,20 @@ with gr.Blocks() as demo:
             )
         with gr.Row():
             create_rrd = gr.Button("Create RRD")
+        with gr.Row():
+            viewer = Rerun(
+                streaming=True,
+                panel_states={
+                    "time": "collapsed",
+                    "blueprint": "hidden",
+                    "selection": "hidden",
+                },
+            )
+        create_rrd.click(
+            create_cube_rrd,
+            inputs=[x_count, y_count, z_count, pending_cleanup],
+            outputs=[viewer],
+        )
 
     with gr.Tab("Hosted RRD"):
         with gr.Row():
@@ -127,23 +151,16 @@ with gr.Blocks() as demo:
                     f"{rr.bindings.get_app_url()}/examples/plots.rrd",
                 ],
             )
-
-    # Rerun 0.16 has issues when embedded in a Gradio tab, so we share a viewer between all the tabs.
-    # In 0.17 we can instead scope each viewer to its own tab to clean up these examples further.
-    with gr.Row():
-        viewer = Rerun(
-            streaming=True,
-        )
-
-    stream_blur.click(streaming_repeated_blur, inputs=[img], outputs=[viewer])
-
-    create_rrd.click(
-        create_cube_rrd,
-        inputs=[x_count, y_count, z_count, pending_cleanup],
-        outputs=[viewer],
-    )
-
-    choose_rrd.change(lambda x: x, inputs=[choose_rrd], outputs=[viewer])
+        with gr.Row():
+            viewer = Rerun(
+                streaming=True,
+                panel_states={
+                    "time": "collapsed",
+                    "blueprint": "hidden",
+                    "selection": "hidden",
+                },
+            )
+        choose_rrd.change(lambda x: x, inputs=[choose_rrd], outputs=[viewer])
 
 
 if __name__ == "__main__":
